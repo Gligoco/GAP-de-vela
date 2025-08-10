@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simulador de GAP & Grau de Vela — Propriedade Intelectual de Gabriel Cappello Machado</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root{
+    --bg:#0b0f14;        /* fundo escuro premium */
+    --card:#121822;      /* cartões */
+    --muted:#93a4b8;     /* texto secundário */
+    --text:#e6edf3;      /* texto principal */
+    --accent:#5dd2ff;    /* destaque suave */
+    --accent-2:#7aff9a;  /* sucesso */
+    --warn:#ffc861;      /* atenção */
+    --danger:#ff6b6b;    /* risco */
+    --ok:#78e08f;        /* ok */
+    --grid-gap:1rem;
+    --radius:18px;
+    --shadow:0 10px 30px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.2);
+    --focus:0 0 0 3px rgba(93,210,255,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    background: radial-gradient(1200px 800px at 80% -10%, #10203055, transparent), var(--bg);
+    color:var(--text);
+    line-height:1.5;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:1rem 1.25rem; background:linear-gradient(180deg, #0f141c, #0b0f14);
+    border-bottom:1px solid #1d2633;
+    position:sticky; top:0; z-index:10;
+  }
+  header .brand{display:flex; gap:.75rem; align-items:center}
+  .badge-ip{font-size:.85rem; color:var(--muted)}
+  .title{font-weight:700; letter-spacing:.3px;}
+  .sub{color:var(--muted); font-size:.95rem}
+
+  main{padding:1.25rem; max-width:1200px; margin:0 auto}
+  .grid{display:grid; grid-template-columns: 460px 1fr; gap:var(--grid-gap)}
+  @media (max-width: 1000px){
+    .grid{grid-template-columns:1fr}
+  }
+
+  .card{
+    background:linear-gradient(180deg, #0e1420, #0b1018 40%, #0b0f14);
+    border:1px solid #1a2230; border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:1rem; position:relative; overflow:hidden;
+  }
+  .card h2{margin:.25rem 0 .75rem; font-size:1.1rem}
+  .card h3{margin:0 0 .75rem; font-size:1rem; color:var(--muted)}
+  .help{font-size:.85rem; color:var(--muted)}
+
+  form .row{display:grid; grid-template-columns:1fr 1fr; gap:.75rem}
+  form .row-1{display:grid; grid-template-columns:1fr; gap:.75rem}
+  @media (max-width:560px){
+    form .row{grid-template-columns:1fr}
+  }
+
+  label{display:block; font-size:.9rem; margin:.25rem 0 .35rem}
+  input, select{width:100%; padding:.7rem .8rem; border-radius:12px; border:1px solid #212b3b; background:#0e1520; color:var(--text); outline:none; transition:.15s border, .15s box-shadow}
+  input::placeholder{color:#667892}
+  input:focus, select:focus{border-color:#2a88b9; box-shadow:var(--focus)}
+  input[aria-invalid="true"]{border-color:var(--danger)}
+
+  .actions{display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.5rem}
+  .btn{cursor:pointer; border:1px solid #1f2a3b; background:#0d1522; color:var(--text); padding:.7rem 1rem; border-radius:12px; transition:.18s transform,.18s background,.18s border}
+  .btn:hover{transform:translateY(-1px); background:#101b2c}
+  .btn.primary{border-color:#2a88b9; background:linear-gradient(180deg,#123c57,#0f2f45);}
+  .btn.ghost{border-style:dashed; opacity:.85}
+
+  .results{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:.75rem}
+  @media (max-width: 900px){.results{grid-template-columns:1fr}}
+  .result-box{padding:1rem; background:linear-gradient(180deg,#0f1724,#0e1420); border:1px solid #1d2736; border-radius:16px}
+  .result-box .value{font-size:1.8rem; font-weight:800; letter-spacing:.3px}
+  .result-box small{color:var(--muted)}
+
+  .meters{display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-top:.5rem}
+  .meter{background:#0e1520; border:1px solid #1f2a35; padding:.6rem; border-radius:12px}
+  .meter .label{display:flex; justify-content:space-between; font-size:.85rem; color:var(--muted)}
+  .bar{height:10px; border-radius:8px; background:#1a2433; margin-top:.4rem; overflow:hidden}
+  .bar > span{display:block; height:100%; background:linear-gradient(90deg, var(--accent), #7cdbff); width:0%}
+
+  .status{margin-top:.75rem; display:flex; flex-wrap:wrap; gap:.5rem}
+  .status .badge{padding:.4rem .65rem; border-radius:999px; font-size:.85rem; border:1px solid;}
+  .badge.ok{color:#b7ffd0; border-color:#285f41; background:rgba(39, 174, 96,.08)}
+  .badge.warn{color:#ffe6b5; border-color:#5a4a1e; background:rgba(255, 200, 97,.08)}
+  .badge.danger{color:#ffb3b3; border-color:#5c2a2a; background:rgba(255, 107, 107,.08)}
+
+  .explain{margin-top:.75rem; color:var(--muted); font-size:.92rem}
+  .explain p{margin:.4rem 0}
+  .muted{color:var(--muted)}
+
+  /* Canvas */
+  #vizCard{display:grid; grid-template-columns: 1fr; gap: .75rem}
+  .canvasWrap{position:relative; aspect-ratio: 16/10; background: radial-gradient(60% 100% at 50% 80%, #0c111a, #0b0f14 65%); border:1px solid #1a2230; border-radius:16px; overflow:hidden}
+  canvas{width:100%; height:100%}
+  .overlay{position:absolute; inset:0; pointer-events:none}
+  .overlay .topLeft, .overlay .topRight, .overlay .bottomLeft, .overlay .bottomRight{position:absolute; padding:.5rem .65rem; background:linear-gradient(180deg, #0d1420aa, #0a0f16aa); border:1px solid #1e2a3d; border-radius:12px; font-size:.85rem}
+  .overlay .topLeft{top:.6rem; left:.6rem}
+  .overlay .topRight{top:.6rem; right:.6rem}
+  .overlay .bottomLeft{bottom:.6rem; left:.6rem}
+  .overlay .bottomRight{bottom:.6rem; right:.6rem}
+
+  .controls{display:flex; gap:.75rem; align-items:center}
+  .range{display:flex; flex:1; align-items:center; gap:.5rem}
+  .range input[type=range]{flex:1}
+  input[type=range]{width:100%}
+  .mono{font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+
+  footer{margin:2rem auto 1rem; max-width:1200px; color:var(--muted); padding:0 1.25rem}
+  footer .hr{height:1px; background:#1a2230; margin:1rem 0}
+</style>
+</head>
+<body>
+<header aria-label="Topo">
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 2l2.7 5.47 6.04.88-4.37 4.26 1.03 6.01L12 16.9l-5.4 2.72 1.03-6.01-4.37-4.26 6.04-.88L12 2z" fill="url(#g)"/>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#5dd2ff"/><stop offset="1" stop-color="#7aff9a"/></linearGradient></defs>
+    </svg>
+    <div>
+      <div class="title">Simulador de GAP & Grau de Vela</div>
+      <div class="sub">Estimativa heurística com limite elétrico (Paschen-like)</div>
+    </div>
+  </div>
+  <div class="badge-ip">© 2025 — Propriedade Intelectual de Gabriel Cappello Machado. Todos os direitos reservados.</div>
+</header>
+
+<main>
+  <div class="grid" role="region" aria-label="Layout principal">
+    <!-- ENTRADAS -->
+    <section class="card" aria-label="Entradas do motor">
+      <h2>Entradas</h2>
+      <form id="form" novalidate>
+        <div class="row">
+          <div>
+            <label for="disp">Cilindrada total (cm³)</label>
+            <input id="disp" name="disp" type="number" inputmode="decimal" min="200" max="8000" step="1" placeholder="ex.: 1998" required />
+          </div>
+          <div>
+            <label for="cyl">Número de cilindros</label>
+            <input id="cyl" name="cyl" type="number" min="2" max="16" step="1" placeholder="ex.: 4" required />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="rpmMax">RPM máxima</label>
+            <input id="rpmMax" name="rpmMax" type="number" min="3000" max="12000" step="100" placeholder="ex.: 7000" required />
+          </div>
+          <div>
+            <label for="rpmTq">RPM de torque máximo</label>
+            <input id="rpmTq" name="rpmTq" type="number" min="1500" max="12000" step="100" placeholder="ex.: 4500" required />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="advTq">Ponto de ignição no torque máx. (° BTDC)</label>
+            <input id="advTq" name="advTq" type="number" min="0" max="40" step="0.5" placeholder="ex.: 12" required />
+          </div>
+          <div>
+            <label for="boost">Boost na potência máx. (bar, gauge)</label>
+            <input id="boost" name="boost" type="number" min="0" max="3" step="0.01" placeholder="0.00 = aspirado" required />
+          </div>
+        </div>
+        <div class="row-1">
+          <div>
+            <label for="ngk">Grau atual da vela (NGK)</label>
+            <select id="ngk" name="ngk" required>
+              <option value="">Selecione…</option>
+              <option>5</option>
+              <option>6</option>
+              <option>7</option>
+              <option>8</option>
+              <option>9</option>
+              <option>10</option>
+            </select>
+          </div>
+          <div>
+            <label for="ign">Força da ignição (simplificada)</label>
+            <select id="ign" name="ign" required>
+              <option value="oem">Média — COP OEM moderna (~26 kV)</option>
+              <option value="weak">Fraca — bobina única antiga (~18 kV)</option>
+              <option value="strong">Forte — COP performance (~35 kV)</option>
+              <option value="very">Muito forte — amplificada (~42 kV)</option>
+              <option value="cdi">CDI/competição (~55 kV)</option>
+            </select>
+          </div>
+        </div>
+        <div class="help">Dicas:
+          <ul>
+            <li>NA comum: GAP típico 0,75–0,95 mm. Turbo: 0,55–0,85 mm.</li>
+            <li>NGK: números maiores = vela mais fria. Ign. mais forte permite manter GAP maior sob pressão.</li>
+            <li>Este app limita o GAP pelo <em>máximo saltável</em> com base em pressão e capacidade elétrica.</li>
+          </ul>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn primary" id="btnCalc">Calcular recomendações</button>
+          <button type="reset" class="btn ghost" id="btnClear">Limpar</button>
+        </div>
+        <div id="formMsg" class="help" role="status" aria-live="polite" style="margin-top:.5rem"></div>
+      </form>
+    </section>
+
+    <!-- RESULTADOS + VIZ -->
+    <section class="card" aria-label="Resultados e simulação">
+      <h2>Resultados</h2>
+      <div class="results" id="results">
+        <div class="result-box" aria-live="polite" aria-label="GAP recomendado">
+          <div class="muted">GAP recomendado (mm)</div>
+          <div class="value" id="gapOut">—</div>
+          <small id="gapBand">Faixa alvo —</small>
+        </div>
+        <div class="result-box" aria-live="polite" aria-label="Grau de vela sugerido">
+          <div class="muted">Grau de vela sugerido (NGK)</div>
+          <div class="value" id="plugOut">—</div>
+          <small id="plugTrend">—</small>
+        </div>
+        <div class="result-box" aria-live="polite" aria-label="Limite elétrico de GAP">
+          <div class="muted">GAP máximo saltável (mm)</div>
+          <div class="value" id="gapMaxElec">—</div>
+          <small id="ignMargin">Tensão req./disp.: —</small>
+        </div>
+      </div>
+      <div class="meters">
+        <div class="meter" aria-label="Índice de carga/pressão">
+          <div class="label"><span>Carga / pressão</span><span class="mono" id="idxLoadLbl">0</span></div>
+          <div class="bar"><span id="idxLoadBar"></span></div>
+        </div>
+        <div class="meter" aria-label="Necessidade de estabilidade de chama">
+          <div class="label"><span>Necessidade de estabilidade de chama</span><span class="mono" id="idxFlameLbl">0</span></div>
+          <div class="bar"><span id="idxFlameBar"></span></div>
+        </div>
+      </div>
+      <div class="status" id="statusRow" aria-live="polite"></div>
+
+      <div id="vizCard" aria-label="Simulação visual da combustão">
+        <h3>Simulação de combustão (conceitual)</h3>
+        <div class="canvasWrap">
+          <canvas id="viz" width="900" height="560" aria-label="Canvas de simulação"></canvas>
+          <div class="overlay">
+            <div class="topLeft mono" id="ovlAngle">Ângulo: —°</div>
+            <div class="topRight mono" id="ovlSpark">Faísca: —° BTDC</div>
+            <div class="bottomLeft mono" id="ovlGap">GAP: — mm</div>
+            <div class="bottomRight mono">PMS indicado ▲</div>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="range" aria-label="Velocidade da simulação">
+            <label for="speed">Velocidade (x)</label>
+            <input id="speed" type="range" min="0.5" max="4" value="1" step="0.1" />
+            <div class="mono" id="speedLbl">1.0×</div>
+          </div>
+          <button type="button" class="btn" id="btnRestart">Reiniciar ciclo</button>
+        </div>
+        <div class="help">A faísca ocorre a <span id="sparkText">—</span> antes do PMS. O raio inicial da chama escala com o GAP; o crescimento desacelera conforme carga/pressão aumentam (boost / L/cyl).</div>
+      </div>
+
+      <div class="explain" id="explain">
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="hr"></div>
+    <div>⚠️ Estimativa heurística — valide em dinamômetro, leitura de velas, detonação e logs.</div>
+    <div class="muted">© 2025 — Propriedade Intelectual de Gabriel Cappello Machado. Todos os direitos reservados.</div>
+  </footer>
+</main>
+
+<script>
+/* =====================================================================
+   Simulador de GAP & Grau de Vela (Heurístico + Limite Elétrico)
+
+   1) GAP limitado por modelo "Paschen-like":
+      V_req(kV) ≈ K * P_spark_abs(bar) * gap(mm)
+      K ≈ 3.3 kV/(mm·bar). P_spark_abs ≈ (1 + boost_bar) * C_spark (6–10).
+
+   2) Grau NGK usa pressão na faísca e rotação:
+      +1: P_spark_abs ≥ 12 bar ou índice de carga ≥6.
+      +2: P_spark_abs ≥ 18 bar OU (boost ≥ 1.2 bar e RPMmáx ≥ 7500).
+      +1 adicional se avanço no torque ≥16° BTDC. -1 apenas em cenário leve.
+   ===================================================================== */
+
+(() => {
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const round = (v, d=2) => Number.parseFloat(v).toFixed(d);
+  const byId = id => document.getElementById(id);
+
+  const $disp = byId('disp');
+  const $cyl = byId('cyl');
+  const $rpmMax = byId('rpmMax');
+  const $rpmTq = byId('rpmTq');
+  const $advTq = byId('advTq');
+  const $boost = byId('boost');
+  const $ngk = byId('ngk');
+  const $ign = byId('ign');
+
+  const $btnCalc = byId('btnCalc');
+  const $btnClear = byId('btnClear');
+  const $formMsg = byId('formMsg');
+
+  const $gapOut = byId('gapOut');
+  const $gapBand = byId('gapBand');
+  const $plugOut = byId('plugOut');
+  const $plugTrend = byId('plugTrend');
+  const $gapMaxElec = byId('gapMaxElec');
+  const $ignMargin = byId('ignMargin');
+
+  const $idxLoadLbl = byId('idxLoadLbl');
+  const $idxLoadBar = byId('idxLoadBar');
+  const $idxFlameLbl = byId('idxFlameLbl');
+  const $idxFlameBar = byId('idxFlameBar');
+  const $statusRow = byId('statusRow');
+  const $explain = byId('explain');
+
+  const $canvas = byId('viz');
+  const ctx = $canvas.getContext('2d');
+  const $ovlAngle = byId('ovlAngle');
+  const $ovlSpark = byId('ovlSpark');
+  const $ovlGap = byId('ovlGap');
+  const $sparkText = byId('sparkText');
+  const $speed = byId('speed');
+  const $speedLbl = byId('speedLbl');
+  const $btnRestart = byId('btnRestart');
+
+  let sim = {
+    crankDeg: 300,
+    sparkBTDC: 12,
+    gap: 0.80,
+    loadIdx: 0,
+    flameIdx: 0,
+    running: true,
+    speed: 1.0,
+    lcyl: 0.5,
+    boost: 0.0,
+  };
+
+  const IGN_PROFILES = {
+    weak:   {label:'Fraca',        kv:18, energy_mJ:30},
+    oem:    {label:'Média (OEM)',  kv:26, energy_mJ:50},
+    strong: {label:'Forte',        kv:35, energy_mJ:80},
+    very:   {label:'Muito forte',  kv:42, energy_mJ:100},
+    cdi:    {label:'CDI',          kv:55, energy_mJ:120},
+  };
+  const IGN_DERATE = 0.80;
+  const K_KV_PER_MM_BAR = 3.3;
+
+  function compute(inputs){
+    const {cc, cyl, rpmMax, rpmTq, advBTDC, boost, ngk, ignKey} = inputs;
+    const lcyl = (cc/1000)/cyl;
+
+    const lComp = clamp((lcyl - 0.25)/(0.75), 0, 1) * 4.0;
+    const tqEarly = clamp(1 - (rpmTq / rpmMax), 0, 1);
+    const tqComp = tqEarly * 3.5;
+    const boostComp = clamp(boost * 2.2, 0, 5.0);
+    let idxLoad = clamp(lComp + tqComp + boostComp, 0, 10);
+
+    const rpmComp = clamp((rpmMax - 6000)/3000, 0, 1) * 6.0;
+    const advComp = clamp((18 - advBTDC)/18, 0, 1) * 4.0;
+    let idxFlame = clamp(rpmComp + advComp, 0, 10);
+
+    let C_spark = 7.5;
+    if (advBTDC <= 8) C_spark += 1.0;
+    if (advBTDC >= 18) C_spark -= 0.5;
+    if (lcyl >= 0.50) C_spark += 0.5;
+    C_spark = clamp(C_spark, 6.0, 10.0);
+
+    const P_man_abs = 1 + boost;
+    const P_spark_abs = P_man_abs * C_spark;
+
+    const baseGap = 0.80;
+    const plus = (idxFlame/10) * 0.05;
+    const minus = (idxLoad/10) * 0.08;
+    let gapHeur = baseGap + plus - minus;
+
+    const globalMin = 0.55, globalMax = 1.00;
+    let bandMin, bandMax, bandLabel;
+    if (boost > 0.01){
+      bandMin = 0.55; bandMax = 0.85; bandLabel = 'Turbo: 0,55–0,85 mm';
+    } else if (lcyl >= 0.5){
+      bandMin = 0.60; bandMax = 0.92; bandLabel = 'NA L/cyl grande: 0,60–0,92 mm';
+    } else {
+      bandMin = 0.75; bandMax = 0.95; bandLabel = 'NA típico: 0,75–0,95 mm';
+    }
+
+    const ign = IGN_PROFILES[ignKey] || IGN_PROFILES.oem;
+    const V_disp_eff = ign.kv * IGN_DERATE;
+    const gapMaxElec = clamp(V_disp_eff / (K_KV_PER_MM_BAR * P_spark_abs), 0.40, 1.10);
+    const V_req_heur = K_KV_PER_MM_BAR * P_spark_abs * gapHeur;
+
+    let gap = Math.min(gapHeur, gapMaxElec * 0.95);
+    gap = clamp(gap, globalMin, globalMax);
+
+    let ngkNum = parseInt(ngk,10);
+    let delta = 0;
+    if (P_spark_abs >= 12 || idxLoad >= 6) delta += 1;
+    if (P_spark_abs >= 18 || (boost >= 1.2 && rpmMax >= 7500)) delta += 1;
+    if (advBTDC >= 16) delta += 1;
+    const lightLoad = (idxLoad < 3) && (lcyl < 0.35) && (rpmMax < 6000) && (boost <= 0.01);
+    if (lightLoad) delta = min(delta, 0) - 1;
+
+    let suggested = Math.max(5, Math.min(10, ngkNum + delta));
+    let trend = 'igual';
+    if (suggested > ngkNum) trend = 'mais fria';
+    else if (suggested < ngkNum) trend = 'mais quente';
+
+    const statuses = [];
+    if (gap >= bandMin && gap <= bandMax) {
+      statuses.push({t:'Janela segura (faixa alvo)', c:'ok'});
+    }
+    if (gap < bandMin || gap < 0.65) {
+      statuses.push({t:'GAP pequeno — chama inicial pode enfraquecer/partida difícil', c:'warn'});
+    }
+    if (gap > bandMax || gap > 0.95) {
+      statuses.push({t:'GAP grande — risco de blowout/misfire em alta carga', c:'warn'});
+    }
+    const V_req_final = K_KV_PER_MM_BAR * P_spark_abs * gap;
+    const margin = (V_disp_eff - V_req_final);
+    if (margin < 0){
+      statuses.push({t:'Limite elétrico excedido — reduzir GAP ou reforçar ignição', c:'danger'});
+    } else if (margin < 3){
+      statuses.push({t:'Margem de tensão baixa — atenção em clima úmido/altas rotações', c:'warn'});
+    }
+
+    return {
+      lcyl,
+      idxLoad: Number(idxLoad.toFixed(1)),
+      idxFlame: Number(idxFlame.toFixed(1)),
+      gap: Number(gap.toFixed(2)),
+      gapHeur: Number(gapHeur.toFixed(2)),
+      band: {min: bandMin, max: bandMax, label: bandLabel},
+      ngkSuggested: suggested,
+      ngkTrend: trend,
+      statuses,
+      P_spark_abs: Number(P_spark_abs.toFixed(1)),
+      V_req_heur: Number(V_req_heur.toFixed(1)),
+      V_req_final: Number(V_req_final.toFixed(1)),
+      gapMaxElec: Number(gapMaxElec.toFixed(2)),
+      V_disp_eff: Number(V_disp_eff.toFixed(1)),
+      params: {cc, cyl, rpmMax, rpmTq, advBTDC, boost, ngkNum, baseGap, plus: Number(plus.toFixed(3)), minus: Number(minus.toFixed(3)), ignKv: ign.kv, ignDerate: IGN_DERATE, K: K_KV_PER_MM_BAR}
+    };
+  }
+
+  function render(res){
+    $gapOut.textContent = round(res.gap, 2);
+    $gapBand.textContent = `${res.band.label}`;
+
+    $plugOut.textContent = String(res.ngkSuggested);
+    $plugTrend.textContent = res.ngkTrend === 'igual' ? 'Mantém o grau atual' : res.ngkTrend;
+
+    $gapMaxElec.textContent = round(res.gapMaxElec,2);
+    $ignMargin.textContent = `Req. ${res.V_req_final} kV · Disp. ${res.V_disp_eff} kV`;
+
+    $idxLoadLbl.textContent = res.idxLoad.toFixed(1);
+    $idxFlameLbl.textContent = res.idxFlame.toFixed(1);
+    $idxLoadBar.style.width = `${res.idxLoad*10}%`;
+    $idxFlameBar.style.width = `${res.idxFlame*10}%`;
+
+    $statusRow.innerHTML = '';
+    res.statuses.forEach(s=>{
+      const b=document.createElement('div');
+      b.className = `badge ${s.c}`;
+      b.textContent = s.t;
+      $statusRow.appendChild(b);
+    });
+
+    const {cc,cyl,rpmMax,rpmTq,advBTDC,boost,ngkNum,baseGap,plus,minus,ignKv,ignDerate,K} = res.params;
+    $explain.innerHTML = `
+      <p><strong>Lógica aplicada</strong> — L/cyl = <span class="mono">${round(res.lcyl,3)}</span> L/cil. Índice <em>carga</em> = <span class="mono">${res.idxLoad.toFixed(1)}</span>. Índice <em>chama</em> = <span class="mono">${res.idxFlame.toFixed(1)}</span>.</p>
+      <p><strong>Pressão na faísca</strong>: P<sub>spark</sub> ≈ (1+boost)·C<sub>spark</sub> = <span class="mono">${res.P_spark_abs}</span> bar. K ≈ <span class="mono">${K.toFixed(1)}</span> kV/(mm·bar). V<sub>disp</sub>≈<span class="mono">${(ignKv*ignDerate).toFixed(1)} kV</span>.</p>
+      <p><strong>Heurística do GAP</strong>: base <span class="mono">${baseGap.toFixed(2)} mm</span> + chama rápida <span class="mono">+${plus.toFixed(3)} mm</span> − carga <span class="mono">${minus.toFixed(3)} mm</span> ⇒ alvo <span class="mono">${res.gapHeur.toFixed(2)} mm</span>. Limite elétrico dá <em>GAP máx.</em> = <span class="mono">${round(res.gapMaxElec,2)} mm</span>; o final exige <span class="mono">${res.V_req_final} kV</span>.</p>
+      <p><strong>Resultado</strong>: GAP <strong>${round(res.gap,2)} mm</strong> (janela ${res.band.label}). Grau NGK: <strong>${res.ngkSuggested}</strong> (${res.ngkTrend}).</p>
+      <p><em>Fine‑tuning:</em> passos de <strong>0,05 mm</strong> e validação com leitura de velas, detonação e logs.</p>
+    `;
+
+    sim.gap = res.gap;
+    sim.sparkBTDC = advBTDC;
+    sim.loadIdx = res.idxLoad;
+    sim.flameIdx = res.idxFlame;
+    sim.lcyl = res.lcyl;
+    sim.boost = boost;
+    $ovlSpark.textContent = `Faísca: ${round(sim.sparkBTDC,1)}° BTDC`;
+    $ovlGap.textContent = `GAP: ${round(sim.gap,2)} mm`;
+    $sparkText.textContent = `${round(sim.sparkBTDC,1)}°`;
+  }
+
+  function draw(){
+    const W = $canvas.width, H = $canvas.height;
+    const cx = W*0.5, cy = H*0.58, R = Math.min(W*0.35, H*0.42);
+    const crank = sim.crankDeg;
+    const sparkCrank = 360 - sim.sparkBTDC;
+    const afterSpark = crank >= sparkCrank;
+
+    ctx.clearRect(0,0,W,H);
+
+    const grad = ctx.createRadialGradient(cx, cy+R*0.3, R*0.1, cx, cy, R);
+    grad.addColorStop(0, '#0f1a28'); grad.addColorStop(1, '#0a0f16');
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fillStyle = grad; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#1f2a3b'; ctx.stroke();
+
+    ctx.beginPath(); ctx.moveTo(cx, cy-R); ctx.lineTo(cx, cy-R-18);
+    ctx.strokeStyle = '#66c0ff'; ctx.lineWidth = 3; ctx.stroke();
+
+    const sparkAngle = -Math.PI/2;
+    const sx = cx + Math.cos(sparkAngle)*(R*0.75);
+    const sy = cy + Math.sin(sparkAngle)*(R*0.75);
+    ctx.save(); ctx.translate(sx, sy); ctx.rotate(0.1);
+    ctx.strokeStyle = '#a9b7c6'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(8, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(12, -3); ctx.stroke();
+    const glow = Math.min(1, sim.gap/1.0);
+    ctx.beginPath(); ctx.arc(9, -1.5, 3+3*glow, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255, 244, 200, 0.20)'; ctx.fill();
+    ctx.restore();
+
+    const kGap = 2.8;
+    let flameR = sim.gap * kGap;
+    if (afterSpark){
+      const dtDeg = crank - sparkCrank;
+      const baseRate = 1.6;
+      const flameFactor = 0.6 + (sim.flameIdx/10)*0.8;
+      const loadBrake = 0.4 + (1 - sim.loadIdx/10)*0.8;
+      flameR += dtDeg * baseRate * flameFactor * loadBrake;
+    }
+    flameR = Math.min(flameR, R*0.92);
+
+    if (afterSpark){
+      const g = ctx.createRadialGradient(sx, sy, Math.max(1, flameR*0.15), sx, sy, flameR);
+      g.addColorStop(0, 'rgba(255,240,180,0.95)');
+      g.addColorStop(0.2, 'rgba(255,180,80,0.70)');
+      g.addColorStop(0.55, 'rgba(255,120,40,0.35)');
+      g.addColorStop(1, 'rgba(255,80,40,0.08)');
+      ctx.beginPath(); ctx.arc(sx, sy, flameR, 0, Math.PI*2); ctx.fillStyle = g; ctx.fill();
+    }
+
+    $ovlAngle.textContent = `Ângulo: ${crank.toFixed(1)}°`;
+
+    ctx.save(); ctx.translate(cx, cy); ctx.strokeStyle = '#283245';
+    for (let a=-50; a<=50; a+=10){
+      const rad = (-90 + a) * Math.PI/180;
+      const x1 = Math.cos(rad)*R*0.98; const y1 = Math.sin(rad)*R*0.98;
+      const x2 = Math.cos(rad)*R*0.90; const y2 = Math.sin(rad)*R*0.90;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function step(ts){
+    if (!step.last) step.last = ts;
+    const dt = (ts - step.last)/1000;
+    step.last = ts;
+    if (sim.running){
+      const degPerSec = 60 * sim.speed;
+      sim.crankDeg += degPerSec * dt;
+      if (sim.crankDeg > 420) sim.crankDeg = 300;
+    }
+    draw();
+    requestAnimationFrame(step);
+  }
+
+  function validate(){
+    const values = getValues();
+    let ok = true;
+    const mark = (el, state) => el.setAttribute('aria-invalid', state? 'true':'false');
+
+    if (!(values.cc >= 200 && values.cc <= 8000)) ok=false, mark($disp,true); else mark($disp,false);
+    if (!(values.cyl >= 2 && values.cyl <= 16)) ok=false, mark($cyl,true); else mark($cyl,false);
+    if (!(values.rpmMax >= 3000 && values.rpmMax <= 12000)) ok=false, mark($rpmMax,true); else mark($rpmMax,false);
+    if (!(values.rpmTq >= 1500 && values.rpmTq <= 12000)) ok=false, mark($rpmTq,true); else mark($rpmTq,false);
+    if (!(values.advBTDC >= 0 && values.advBTDC <= 40)) ok=false, mark($advTq,true); else mark($advTq,false);
+    if (!(values.boost >= 0 && values.boost <= 3)) ok=false, mark($boost,true); else mark($boost,false);
+    if (!values.ngk) ok=false, mark($ngk,true); else mark($ngk,false);
+    if (!values.ignKey) ok=false, mark($ign,true); else mark($ign,false);
+
+    if (values.rpmTq > values.rpmMax){ ok=false; setMsg('⚠️ A RPM de torque máximo deve ser ≤ à RPM máxima.'); }
+    else setMsg('');
+
+    return ok;
+  }
+
+  function setMsg(msg){ $formMsg.textContent = msg; }
+
+  function getValues(){
+    return {
+      cc: Number($disp.value || 0),
+      cyl: Number($cyl.value || 0),
+      rpmMax: Number($rpmMax.value || 0),
+      rpmTq: Number($rpmTq.value || 0),
+      advBTDC: Number($advTq.value || 0),
+      boost: Number($boost.value || 0),
+      ngk: $ngk.value,
+      ignKey: $ign.value
+    };
+  }
+
+  function calculate(){
+    if (!validate()) return;
+    const vals = getValues();
+    const res = compute(vals);
+    render(res);
+  }
+
+  $btnCalc.addEventListener('click', calculate);
+  $btnClear.addEventListener('click', () => {
+    setTimeout(()=>{
+      seedDefaults(); setMsg(''); calculate(); restartSim();
+    });
+  });
+
+  $speed.addEventListener('input', () => {
+    sim.speed = Number($speed.value);
+    $speedLbl.textContent = `${sim.speed.toFixed(1)}×`;
+  });
+
+  function restartSim(){
+    sim.crankDeg = 300; sim.running = true;
+  }
+  $btnRestart.addEventListener('click', restartSim);
+
+  function seedDefaults(){
+    $disp.value = 1998;
+    $cyl.value = 4;
+    $rpmMax.value = 7000;
+    $rpmTq.value = 4500;
+    $advTq.value = 12;
+    $boost.value = 0.00;
+    $ngk.value = '6';
+    $ign.value = 'oem';
+    $speed.value = 1.0; $speedLbl.textContent = '1.0×';
+  }
+
+  seedDefaults();
+  calculate();
+  requestAnimationFrame(step);
+})();
+
+// Registro do Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
