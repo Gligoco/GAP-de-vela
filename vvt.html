@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simulador de Variador de Fase</title>
+<style>
+  body{font-family: system-ui, -apple-system, sans-serif; background:#0b0f14; color:#e6edf3; margin:0; padding:1rem; display:flex; flex-direction:column; align-items:center;}
+  canvas{background:#111; border:1px solid #333; border-radius:8px; max-width:100%; height:auto;}
+  h1{font-size:1.4rem; margin:.2rem 0 1rem}
+  .controls{display:flex; gap:1.5rem; margin-top:1rem; flex-wrap:wrap; justify-content:center;}
+  .control{display:flex; flex-direction:column; align-items:center; font-size:.9rem;}
+  input[type=range]{width:160px;}
+</style>
+</head>
+<body>
+<h1>Simulador de Variador de Fase</h1>
+<canvas id="sim" width="600" height="400"></canvas>
+<div class="controls">
+  <div class="control">
+    <label>Fase Admissão <span id="valIn">0°</span></label>
+    <input type="range" id="phaseIn" min="-40" max="40" value="0">
+  </div>
+  <div class="control">
+    <label>Fase Escape <span id="valEx">0°</span></label>
+    <input type="range" id="phaseEx" min="-40" max="40" value="0">
+  </div>
+  <div class="control">
+    <label>Velocidade <span id="valSp">1x</span></label>
+    <input type="range" id="speed" min="0" max="3" step="0.1" value="1">
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+const phaseInEl = document.getElementById('phaseIn');
+const phaseExEl = document.getElementById('phaseEx');
+const speedEl = document.getElementById('speed');
+const valIn = document.getElementById('valIn');
+const valEx = document.getElementById('valEx');
+const valSp = document.getElementById('valSp');
+
+const sim = {crank:0, speed:1, phaseIn:0, phaseEx:0};
+phaseInEl.oninput = () => {sim.phaseIn = Number(phaseInEl.value); valIn.textContent = sim.phaseIn + '°';};
+phaseExEl.oninput = () => {sim.phaseEx = Number(phaseExEl.value); valEx.textContent = sim.phaseEx + '°';};
+speedEl.oninput = () => {sim.speed = Number(speedEl.value); valSp.textContent = sim.speed.toFixed(1) + 'x';};
+
+function valveOpen(angle, center, duration, phase){
+  const start = center - duration/2 + phase;
+  return ((angle - start + 720) % 720) < duration;
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const w=canvas.width, h=canvas.height;
+  const top=h*0.1, bottom=h*0.9, stroke=bottom-top;
+  ctx.strokeStyle='#555'; ctx.lineWidth=4;
+  ctx.strokeRect(w*0.3, top, w*0.4, stroke);
+  const y = bottom - stroke*(0.5-0.5*Math.cos(sim.crank*Math.PI/180));
+  ctx.fillStyle='#888';
+  ctx.fillRect(w*0.3, y-20, w*0.4, 20);
+  ctx.fillStyle='#e6edf3';
+  ctx.font='16px sans-serif';
+  ctx.fillText(`Ângulo: ${sim.crank.toFixed(0)}°`,10,20);
+  const intakeOpen = valveOpen(sim.crank,90,200,sim.phaseIn);
+  const exhaustOpen = valveOpen(sim.crank,630,200,sim.phaseEx);
+  ctx.fillStyle=intakeOpen?'#5dd2ff':'#222';
+  ctx.beginPath();
+  ctx.arc(w*0.4, top, 15, Math.PI, 0, true);
+  ctx.fill();
+  if(intakeOpen){ ctx.fillRect(w*0.4-15, top, 30, 30); }
+  ctx.fillStyle=exhaustOpen?'#ff6b6b':'#222';
+  ctx.beginPath();
+  ctx.arc(w*0.6, top, 15, Math.PI, 0, true);
+  ctx.fill();
+  if(exhaustOpen){ ctx.fillRect(w*0.6-15, top, 30, 30); }
+  const strokeNames=['Admissão','Compressão','Combustão','Escape'];
+  const idx = Math.floor(sim.crank/180)%4;
+  ctx.fillStyle='#93a4b8';
+  ctx.fillText(strokeNames[idx], w*0.42, h-10);
+}
+
+let last;
+function step(ts){
+  if(last===undefined) last=ts;
+  const dt=(ts-last)/1000; last=ts;
+  sim.crank = (sim.crank + sim.speed*120*dt) % 720;
+  draw();
+  requestAnimationFrame(step);
+}
+requestAnimationFrame(step);
+</script>
+</body>
+</html>
